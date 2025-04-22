@@ -80,4 +80,55 @@ def simulate_portfolio(allocations, data_dict):
         data = data_dict[name]
         pct_change = data['Close'].pct_change().dropna()
         returns[name] = pct_change * weight
-    portfolio_return = pd.DataFrame(returns).sum(axis=1_
+    portfolio_return = pd.DataFrame(returns).sum(axis=1).cumsum()
+    st.line_chart(portfolio_return)
+
+# ==== NEWS SENTIMENT ANALYSIS ====
+def fetch_and_analyze_news(query):
+    url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&apiKey=YOUR_NEWSAPI_KEY"
+    response = requests.get(url)
+    articles = response.json().get("articles", [])[:5]
+    st.subheader("News Sentiment")
+    for article in articles:
+        title = article['title']
+        sentiment = TextBlob(title).sentiment.polarity
+        st.write(f"{title} (Sentiment: {round(sentiment, 2)})")
+
+# ==== STREAMLIT DASHBOARD ====
+def main():
+    st.title("AI Portfolio Manager")
+    st.markdown("Real-time market insights, portfolio simulation, and sentiment analysis")
+
+    data_dict = {}
+
+    for name, ticker in {**indexes, **currencies}.items():
+        data = fetch_data(ticker, lookback_days)
+        
+        if not data.empty and "Close" in data.columns:
+            analysis = analyze_data(data)
+            insight = generate_insight(name, analysis)
+
+            st.subheader(f"{name} ({ticker})")
+            st.text(insight)
+            plot_chart(data, name)
+
+            data_dict[name] = data
+        else:
+            st.warning(f"Data for {name} could not be loaded.")
+
+    st.subheader("Simulate Your Portfolio")
+    allocations = {}
+    for name in data_dict.keys():
+        weight = st.slider(f"{name} Allocation %", 0, 100, 10)
+        allocations[name] = weight / 100
+
+    if st.button("Run Simulation"):
+        simulate_portfolio(allocations, data_dict)
+
+    st.subheader("Market News Sentiment")
+    topic = st.text_input("Enter topic (e.g. Tesla, Oil, USD)", "USD")
+    if st.button("Analyze News"):
+        fetch_and_analyze_news(topic)
+
+if __name__ == "__main__":
+    main()
