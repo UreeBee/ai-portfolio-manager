@@ -106,8 +106,18 @@ def main():
         if data.empty:
             continue
 
-        analysis = analyze_data(data)
-        insight = generate_insight(name, analysis)
+        if not data.empty and "Close" in data.columns:
+    analysis = analyze_data(data)
+    insight = generate_insight(name, analysis)
+
+    st.subheader(f"{name} ({ticker})")
+    st.text(insight)
+    plot_chart(data, name)
+
+    data_dict[name] = data
+else:
+    st.warning(f"Data for {name} could not be loaded.")
+
 
         st.subheader(f"{name} ({ticker})")
         st.text(insight)
