@@ -1,0 +1,7 @@
+yfinance
+pandas
+openai
+matplotlib
+streamlit
+textblob
+requests
